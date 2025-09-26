@@ -47,11 +47,10 @@
 
    * 先把预测和真实的比值取 log，然后看方差。
 
-   $$
+   $
    \text{SILog} = \sqrt{\frac{1}{N}\sum \delta_i^2 - \left(\frac{1}{N}\sum \delta_i\right)^2}
-   $$
+   $
 
    其中 $\delta_i = \log \hat{d}_i - \log d_i$。
    （强调相对误差，越小越好）
 
-要不要我帮你写一段 **Python 代码**，直接输入预测深度和真实深度数组，就能算出这五个指标？
