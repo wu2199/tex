@@ -1,10 +1,9 @@
 # SymMark — From Trade-off to Synergy: A Versatile Symbiotic Watermarking Framework for LLMs
 
-**作者**：Yidan Wang, Yubing Ren*, Yanan Cao, Binxing Fang（*通讯）
+**作者**：Yidan Wang, Yubing Ren*, Yanan Cao, Binxing Fang
 **会议**：ACL 2025（Main）
 **论文**：arXiv:2505.09924（v2，2025-05-16）
 **代码**：GitHub/redwyd/SymMark
-**参考**：见文末链接 [1]–[4]
 
 ---
 
@@ -133,4 +132,114 @@ WatME 通过“词汇冗余簇 + 互斥分配 red/green”降低质量损耗；S
 * 论文 PDF 与摘要页：[arXiv（PDF）][1]、[arXiv（摘要）][2]
 * ACL Anthology 正式版：[ACL Anthology][3]
 * 代码仓库：[GitHub/redwyd/SymMark][4]
+
+
+---
+
+# Tree-Rings Watermarks: Invisible Fingerprints for Diffusion Images
+
+作者：Yuxin Wen, John Kirchenbauer, Jonas Geiping, Tom Goldstein
+链接：[arXiv:2305.20030v3](https://arxiv.org/abs/2305.20030)
+代码地址：[https://github.com/YuxinWenRick/tree-ring-watermark](https://github.com/YuxinWenRick/tree-ring-watermark)
+
+
+---
+
+## 动机（Motivation）
+
+* 扩散模型（如 Stable Diffusion）的广泛使用带来了版权标记和溯源需求
+* 传统后处理水印易受压缩、裁剪等攻击破坏
+* 本文提出在扩散采样前将水印嵌入初始噪声，命名为 Tree-Ring Watermarking
+
+---
+
+## 方法（Method）
+
+### 核心机制
+
+* 在初始噪声 ( x_T ) 的傅里叶域中加入环状结构
+* 生成后通过 DDIM Inversion 逆推出原始噪声，检测环状水印是否存在
+* 水印不可见，不破坏图像质量，对旋转、模糊、裁剪、压缩等操作鲁棒性强
+
+### 构造水印 Key（Fourier 环状掩码）
+
+| Key 类型         | 特性      | 优点         | 缺点       |
+| -------------- | ------- | ---------- | -------- |
+| Tree-RingZeros | 全零      | 不变性强       | 偏离大，伪阳性高 |
+| Tree-RingRand  | 随机高斯值   | 分布接近噪声，检测强 | 对变换鲁棒性弱  |
+| Tree-RingRings | 多环状恒值结构 | 鲁棒与区分性平衡   | 实现复杂     |
+
+### 检测机制
+
+* 使用 DDIM 逆扩散得到 (\hat{x}_T)，在傅里叶掩码区域与 Key 比较
+* 采用非中心卡方分布建模，输出 P 值，保证检测的统计显著性和可解释性
+
+---
+
+## 威胁模型（Threat Model）
+
+* 生成者通过私有 API 插入水印，用户不可见
+* 攻击者使用常见图像变换尝试移除水印
+* 模型所有者通过逆扩散检测水印，无需元信息
+* 仅模型所有者可检测，提升安全性，但缺乏公开验证性
+
+---
+
+## 实验结果（Results）
+
+### 检测准确率（AUC/TPR@1%FPR）
+
+| 方法             | 干净图像 AUC | 攻击图像 AUC | FID ↑ | CLIP Score ↑ |
+| -------------- | -------- | -------- | ----- | ------------ |
+| DwtDct         | 0.974    | 0.574    | 25.1  | 0.362        |
+| RivaGAN        | 0.999    | 0.854    | 24.5  | 0.361        |
+| Tree-RingZeros | 0.999    | 0.963    | 26.5  | 0.356        |
+| Tree-RingRand  | 1.000    | 0.918    | 25.4  | 0.363        |
+| Tree-RingRings | 1.000    | 0.975    | 25.9  | 0.364        |
+
+Tree-RingRings 在攻击下表现最稳定，图像质量影响最小。Tree-Ring 系列无需模型重训练，完全训练自由。
+
+### 鲁棒性对比（图像攻击）
+
+| 攻击类型 | RivaGAN | Tree-RingRings |
+| ---- | ------- | -------------- |
+| 旋转   | 0.173   | 0.935          |
+| 模糊   | 0.888   | 0.944          |
+| 裁剪缩放 | 0.999   | 0.961          |
+| 色彩扰动 | 0.963   | 0.983          |
+| 高斯噪声 | 0.974   | 0.944          |
+
+---
+
+## 参数消融实验（Ablation）
+
+| 项目             | 发现                         |
+| -------------- | -------------------------- |
+| 步数 mismatch    | 检测对步数不敏感，DDIM inversion 鲁棒 |
+| 水印半径           | 半径越大鲁棒性越强，但 FID 增加         |
+| Guidance scale | 即使 scale=18 仍能有效检测         |
+| 多攻击组合          | 抵抗六种干扰仍保持高 AUC/TPR         |
+
+---
+
+## 局限性与未来方向
+
+* 方法依赖 DDIM，无法直接用于 DPM、PLMS
+* 检测需访问模型参数，不适合开放式认证
+* 多 Key 容量未量化，难以实现用户唯一水印
+* 可探索可逆扩散或改进 DDIM inversion 提升鲁棒性
+
+---
+
+## 总结
+
+| 特征     | Tree-Ring Watermark |
+| ------ | ------------------- |
+| 可见性    | 不可见                 |
+| 检测性    | 高精度（P-value + ROC）  |
+| 抗攻击    | 强                   |
+| 是否训练自由 | 是                   |
+| 多模型适配  | 是                   |
+| 可公开验证  | 否（需模型参数）            |
+
 
