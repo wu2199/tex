@@ -127,11 +127,6 @@ WatME 通过“词汇冗余簇 + 互斥分配 red/green”降低质量损耗；S
 
 阈值与聚类超参对路由敏感；确定性强的场景更适合偏向 sampling 路。若攻击者可观测内部 logits 或采样随机源，将削弱安全性，需做好密钥管理与可观测面最小化。跨语言与跨 tokenizer 时需对齐语义嵌入与聚类过程。
 
----
-
-* 论文 PDF 与摘要页：[arXiv（PDF）][1]、[arXiv（摘要）][2]
-* ACL Anthology 正式版：[ACL Anthology][3]
-* 代码仓库：[GitHub/redwyd/SymMark][4]
 
 
 ---
